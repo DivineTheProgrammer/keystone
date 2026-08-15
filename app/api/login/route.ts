@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
+import { checkRateLimit, resetRateLimit } from '../../lib/rate-limit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,6 +22,22 @@ export async function POST(req: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json({ error: 'email and password are required' }, { status: 400 })
+    }
+
+    const rateLimitKey = 'login:' + email.toLowerCase()
+    const rateLimitResult = checkRateLimit(rateLimitKey)
+
+    if (!rateLimitResult.allowed) {
+      await supabaseAdmin.from('audit_log').insert({
+        tenant_id: tenantId,
+        event_type: 'login_rate_limited',
+        allowed: false,
+      })
+
+      return NextResponse.json(
+        { error: 'Too many failed attempts. Try again in ' + rateLimitResult.retryAfterSeconds + ' seconds.' },
+        { status: 429 }
+      )
     }
 
     const signInResult = await supabase.auth.signInWithPassword({
@@ -44,6 +61,8 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       )
     }
+
+    resetRateLimit(rateLimitKey)
 
     const session = signInResult.data.session
     const user = signInResult.data.user
