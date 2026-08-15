@@ -13,6 +13,16 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SECRET_KEY!
 )
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -21,7 +31,7 @@ export async function POST(req: NextRequest) {
     const tenantId = body.tenantId || '00000000-0000-0000-0000-000000000001'
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'email and password are required' }, { status: 400 })
+      return NextResponse.json({ error: 'email and password are required' }, { status: 400, headers: corsHeaders })
     }
 
     const rateLimitKey = 'login:' + email.toLowerCase()
@@ -36,7 +46,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         { error: 'Too many failed attempts. Try again in ' + rateLimitResult.retryAfterSeconds + ' seconds.' },
-        { status: 429 }
+        { status: 429, headers: corsHeaders }
       )
     }
 
@@ -58,7 +68,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         { error: signInResult.error ? signInResult.error.message : 'Login failed' },
-        { status: 401 }
+        { status: 401, headers: corsHeaders }
       )
     }
 
@@ -97,9 +107,9 @@ export async function POST(req: NextRequest) {
       user: { id: user.id, email: user.email },
       sessionLogged: !sessionInsertResult.error,
       auditLogged: !auditInsertResult.error,
-    })
+    }, { headers: corsHeaders })
   } catch (err) {
     console.error('Login route error:', err)
-    return NextResponse.json({ error: 'Something went wrong', details: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Something went wrong', details: String(err) }, { status: 500, headers: corsHeaders })
   }
 }
