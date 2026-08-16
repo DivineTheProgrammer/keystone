@@ -6,14 +6,14 @@ import { startRegistration, startAuthentication } from '@simplewebauthn/browser'
 export default function WebAuthnTest() {
   const [userId, setUserId] = useState('f6a759df-3159-4615-b298-0c2216a00b0e')
   const [email, setEmail] = useState('testuser2@example.com')
-  const [log, setLog] = useState('')
+  const [log, setLog] = useState<string[]>([])
 
   const addLog = function (msg: string) {
-    setLog(function (prev) { return prev + msg + '\n\n' })
+    setLog(function (prev) { return prev.concat([msg]) })
   }
 
   const handleRegister = async () => {
-    addLog('Requesting registration options...')
+    addLog('Requesting registration options')
     try {
       const optionsRes = await fetch('/api/webauthn/register-options', {
         method: 'POST',
@@ -21,10 +21,10 @@ export default function WebAuthnTest() {
         body: JSON.stringify({ userId: userId, email: email }),
       })
       const options = await optionsRes.json()
-      addLog('Got options, prompting browser authenticator...')
+      addLog('Options received, prompting device authenticator')
 
       const registrationResponse = await startRegistration({ optionsJSON: options })
-      addLog('Browser signed the challenge, verifying with server...')
+      addLog('Device signed the challenge, verifying with server')
 
       const verifyRes = await fetch('/api/webauthn/register-verify', {
         method: 'POST',
@@ -39,7 +39,7 @@ export default function WebAuthnTest() {
   }
 
   const handleLogin = async () => {
-    addLog('Requesting login options...')
+    addLog('Requesting login options')
     try {
       const optionsRes = await fetch('/api/webauthn/login-options', {
         method: 'POST',
@@ -53,10 +53,10 @@ export default function WebAuthnTest() {
         return
       }
 
-      addLog('Got options, prompting browser authenticator...')
+      addLog('Options received, prompting device authenticator')
 
       const authResponse = await startAuthentication({ optionsJSON: optionsData.options })
-      addLog('Browser signed the challenge, verifying with server...')
+      addLog('Device signed the challenge, verifying with server')
 
       const verifyRes = await fetch('/api/webauthn/login-verify', {
         method: 'POST',
@@ -70,29 +70,54 @@ export default function WebAuthnTest() {
     }
   }
 
-  const inputStyle = { width: '100%', padding: '0.5rem', marginTop: '0.25rem', color: 'black', backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }
-  const buttonStyle = { padding: '0.6rem 1.2rem', backgroundColor: 'white', color: 'black', border: '1px solid #333', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }
+  const pageStyle = { minHeight: '100vh', background: 'var(--bg)', padding: '3rem 1.5rem' }
+  const containerStyle = { maxWidth: '600px', margin: '0 auto' }
+  const cardStyle = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem' }
+  const labelStyle = { display: 'block', marginBottom: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }
+  const inputStyle = { width: '100%', padding: '0.6rem 0.75rem', color: 'var(--text-primary)', backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: '0.9rem', fontFamily: 'var(--mono)' }
+  const buttonStyle = { padding: '0.65rem 1.1rem', backgroundColor: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 'var(--radius)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }
+  const secondaryButtonStyle = { ...buttonStyle, backgroundColor: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)' }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif', color: 'white', backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
-      <h1>WebAuthn Test</h1>
+    <div style={pageStyle}>
+      <div style={containerStyle}>
+        <h1>WebAuthn Test</h1>
+        <p style={{ color: 'var(--text-muted)', marginTop: '0.4rem', fontSize: '0.85rem' }}>Passwordless registration and login, verified against a real device authenticator.</p>
 
-      <div style={{ marginTop: '1rem' }}>
-        <label>User ID</label>
-        <input value={userId} onChange={function (e) { setUserId(e.target.value) }} style={inputStyle} />
+        <div style={{ ...cardStyle, marginTop: '1.5rem' }}>
+          <div>
+            <label style={labelStyle}>User ID</label>
+            <input value={userId} onChange={function (e) { setUserId(e.target.value) }} style={inputStyle} />
+          </div>
+
+          <div style={{ marginTop: '1rem' }}>
+            <label style={labelStyle}>Email</label>
+            <input value={email} onChange={function (e) { setEmail(e.target.value) }} style={inputStyle} />
+          </div>
+
+          <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem' }}>
+            <button onClick={handleRegister} style={buttonStyle}>Register Passkey</button>
+            <button onClick={handleLogin} style={secondaryButtonStyle}>Login with Passkey</button>
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, marginTop: '1.25rem' }}>
+          <h3>Event Log</h3>
+          <div style={{ marginTop: '0.75rem' }}>
+            {log.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nothing yet</p>
+            ) : (
+              log.map(function (entry, i) {
+                return (
+                  <div key={i} style={{ fontFamily: 'var(--mono)', fontSize: '0.78rem', color: 'var(--text-secondary)', padding: '0.4rem 0', borderBottom: i === log.length - 1 ? 'none' : '1px solid var(--border)' }}>
+                    {entry}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
       </div>
-
-      <div style={{ marginTop: '1rem' }}>
-        <label>Email</label>
-        <input value={email} onChange={function (e) { setEmail(e.target.value) }} style={inputStyle} />
-      </div>
-
-      <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-        <button onClick={handleRegister} style={buttonStyle}>Register Passkey</button>
-        <button onClick={handleLogin} style={buttonStyle}>Login with Passkey</button>
-      </div>
-
-      <pre style={{ marginTop: '1.5rem', background: '#1a1a1a', color: '#ddd', padding: '1rem', whiteSpace: 'pre-wrap', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #333' }}>{log}</pre>
-    </main>
+    </div>
   )
 }
