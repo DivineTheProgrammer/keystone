@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'userId and email are required' }, { status: 400 })
     }
 
+    const origin = req.headers.get('origin') || 'http://localhost:3000'
+    const rpID = origin.replace('https://', '').replace('http://', '').split(':')[0]
+
     const existingCredsResult = await supabaseAdmin
       .from('webauthn_credentials')
       .select('credential_id')
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const options = await generateRegistrationOptions({
       rpName: 'Keystone',
-      rpID: 'localhost',
+      rpID: rpID,
       userName: email,
       userID: new TextEncoder().encode(userId),
       attestationType: 'none',

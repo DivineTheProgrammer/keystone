@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'email is required' }, { status: 400 })
     }
 
+    const origin = req.headers.get('origin') || 'http://localhost:3000'
+    const rpID = origin.replace('https://', '').replace('http://', '').split(':')[0]
+
     const userResult = await supabaseAdmin
       .from('users')
       .select('id')
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
     })
 
     const options = await generateAuthenticationOptions({
-      rpID: 'localhost',
+      rpID: rpID,
       allowCredentials: allowCredentials,
       userVerification: 'preferred',
     })
