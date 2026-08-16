@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Keystone
 
-## Getting Started
+A multi tenant authentication and authorization service, built to be infrastructure other applications depend on, not a login form bolted onto one app.
 
-First, run the development server:
+## The problem
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Most portfolios show auth as a config choice. Add Supabase auth, add Firebase auth, done. That proves you can follow documentation. It does not prove you understand identity as a system, how sessions get issued and revoked, how permissions get checked and by whom, how a system behaves when someone tries to guess a password five hundred times in a row.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Keystone is an attempt to actually build that system, not describe it.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What it does
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Keystone handles signup, login, and permission checks for multiple separate tenants, each with their own roles and permissions, fully isolated from each other at the database level. A single Keystone deployment can serve many different applications, each with their own users, without any of them able to see another tenant's data.
 
-## Learn More
+It includes:
 
-To learn more about Next.js, take a look at the following resources:
+- Email and password authentication, with every failed and successful attempt logged
+- Passwordless login using WebAuthn passkeys, tested end to end with a real device authenticator
+- Rate limiting on login, tested by actually sending six failed attempts in a row and confirming the sixth gets blocked
+- A permission check system that answers one specific question for every protected action, does this user have this permission in this tenant, checked fresh against the database every time rather than cached
+- A full audit log of authentication events
+- A separate demo application, keystone-client, that authenticates entirely by calling Keystone's API, proving Keystone works as real external infrastructure and not logic tied to one codebase
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How it is built
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js and TypeScript, deployed on Vercel
+- Supabase for the database, with Row Level Security enforced on every table from the first table created, not added later
+- A schema built around real multi tenancy, tenants, roles, and permissions are all separate tables joined together, so a role at one company is a genuinely different row than a role at another, not a shared global list
+- Refresh tokens are hashed before being stored, never kept in plain text
+- WebAuthn handled through the SimpleWebAuthn library, verified cryptographically on the server
 
-## Deploy on Vercel
+See THREAT_MODEL.md in this repo for a full account of what Keystone defends against, how each defense was tested, and where its current honest limits are.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## What actually happened during the build
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Getting this working involved real debugging, not a straight line. A placeholder Supabase URL sat unnoticed in the environment file for longer than it should have, causing every request to fail with a generic error until it was traced back through the actual server logs. Table permissions had to be fixed three separate times as new tables were added, since enabling Row Level Security on a table does not by itself grant the access a query needs, a lesson learned the hard way each time rather than anticipated up front. WebAuthn's user verification setting needed to be relaxed twice, once for registration and once for login, after the first attempt at each was rejected by the verification library despite the passkey itself being created correctly.
+
+None of that is hidden here because it is the actual story of building something that works, not the polished version of it.
+
+## Status
+
+The core service is fully working. Signup, login, permission checks, rate limiting, WebAuthn, and cross application authentication have all been tested directly, not just written and assumed correct.
