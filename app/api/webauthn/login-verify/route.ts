@@ -39,11 +39,14 @@ export async function POST(req: NextRequest) {
 
     const storedCredential = credResult.data
 
+    const origin = req.headers.get('origin') || 'http://localhost:3000'
+    const rpID = origin.replace('https://', '').replace('http://', '').split(':')[0]
+
     const verification = await verifyAuthenticationResponse({
       response: response,
       expectedChallenge: expectedChallenge,
-      expectedOrigin: 'http://localhost:3000',
-      expectedRPID: 'localhost',
+      expectedOrigin: origin,
+      expectedRPID: rpID,
       requireUserVerification: false,
       credential: {
         id: storedCredential.credential_id,

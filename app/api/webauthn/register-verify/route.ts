@@ -25,11 +25,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No pending registration found for this user' }, { status: 400 })
     }
 
+    const origin = req.headers.get('origin') || 'http://localhost:3000'
+    const rpID = origin.replace('https://', '').replace('http://', '').split(':')[0]
+
     const verification = await verifyRegistrationResponse({
       response: response,
       expectedChallenge: expectedChallenge,
-      expectedOrigin: 'http://localhost:3000',
-      expectedRPID: 'localhost',
+      expectedOrigin: origin,
+      expectedRPID: rpID,
       requireUserVerification: false,
     })
 
