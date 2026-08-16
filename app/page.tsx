@@ -1,69 +1,40 @@
-import Image from "next/image";
-
 export default function Home() {
+  const pageStyle = { minHeight: '100vh', background: 'var(--bg)', padding: '4rem 1.5rem' }
+  const containerStyle = { maxWidth: '640px', margin: '0 auto' }
+  const cardStyle = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem', marginTop: '1rem' }
+  const linkRowStyle = { display: 'flex', gap: '1rem', marginTop: '2rem', flexWrap: 'wrap' as const }
+  const linkStyle = { padding: '0.6rem 1.1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }
+  const badgeStyle = { display: 'inline-block', padding: '0.25rem 0.6rem', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--allowed)', fontFamily: 'var(--mono)', marginBottom: '1rem' }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div style={pageStyle}>
+      <div style={containerStyle}>
+        <span style={badgeStyle}>service status: operational</span>
+        <h1>Keystone</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem', lineHeight: 1.6, fontSize: '0.95rem' }}>
+          A multi tenant authentication and authorization service. Built to be infrastructure
+          a separate application can depend on, with real tenant isolation, permission checks
+          run fresh against the database on every request, and passwordless login through
+          WebAuthn passkeys.
+        </p>
+
+        <div style={cardStyle}>
+          <h3>What's actually working</h3>
+          <ul style={{ marginTop: '0.75rem', paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.8 }}>
+            <li>Email and password signup and login, with every attempt logged</li>
+            <li>Passwordless login using device backed passkeys, verified cryptographically</li>
+            <li>Rate limiting on login, tested against a real six attempt brute force simulation</li>
+            <li>Permission checks scoped per tenant, checked fresh on every request</li>
+            <li>A separate demo application authenticating entirely through this service</li>
+          </ul>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div style={linkRowStyle}>
+          <a href="/webauthn-test" style={linkStyle}>Try WebAuthn</a>
+          <a href="https://github.com/DivineTheProgrammer/keystone" style={linkStyle}>View source</a>
+          <a href="https://github.com/DivineTheProgrammer/keystone/blob/main/THREAT_MODEL.md" style={linkStyle}>Threat model</a>
         </div>
-      </main>
+      </div>
     </div>
-  );
+  )
 }
